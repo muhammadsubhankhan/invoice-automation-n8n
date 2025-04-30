@@ -4,6 +4,14 @@
 
 This n8n workflow automates the process of handling invoices and credit card statements. It monitors specific Google Drive folders for new files, processes them using AI, and organizes the data into Google Sheets while also managing email attachments.
 
+
+
+![Screenshot from 2025-04-30 20-57-33](https://github.com/user-attachments/assets/b89bc84b-3ef1-4102-a684-352ed2251150)
+
+
+
+
+
 ## Features
 
 -   Automated monitoring of Google Drive folders for new files

@@ -1,0 +1,820 @@
+{
+  "name": "Invoice Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1CYlBlzvGbjsYXDjrjnoIaueXQVkNs8nM"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -2020,
+        100
+      ],
+      "id": "514c6d5c-b8e9-4532-91ad-59fb6f3c2eb5",
+      "name": "Google Drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "KfBSYk4QPQbhwKXX",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Extract the real transaction data from this {{ $json.text }} credit card statement. Each transaction line contains:\n- A booking date (first date like \"05.01.\")\n- A transaction date (second date like \"04.01.\")\n- Description (like \"AMZN Mktp DE*0X8HD9DU5\")\n- Location (like \"LU\", \"IE\", \"US\")\n- Amount (like \"33,98-\")\n\nFor each transaction, create a table row with:\n- Date (booking date)\n- Description (the service or merchant name)\n- Location (country code)\n- Amount (EUR) (convert \"33,98-\" format to \"-33.98\")\n\nExample line: \"05.01. 04.01. AMZN Mktp DE*0X8HD9DU5 800-279-6620 LU 33,98-\"\nShould become: | 05.01.2024 | AMZN Mktp DE*0X8HD9DU5 | LU | -33.98 | ",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        -1600,
+        100
+      ],
+      "id": "e26c1d45-68e8-4a66-b015-41e89c59aefe",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1qZ97QfUQ9X4BLTh_qubNoNyq3xWDqN41RpNm1LhWHMI",
+          "mode": "list",
+          "cachedResultName": "2024/Creditcard-transactions",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qZ97QfUQ9X4BLTh_qubNoNyq3xWDqN41RpNm1LhWHMI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Tabellenblatt1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1qZ97QfUQ9X4BLTh_qubNoNyq3xWDqN41RpNm1LhWHMI/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "Date"
+          ],
+          "schema": [
+            {
+              "id": "date",
+              "displayName": "date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "location",
+              "displayName": "location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "amount",
+              "displayName": "amount",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -1020,
+        100
+      ],
+      "id": "89276be6-3505-4efe-85fd-fa4b9fec410f",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Wq9gHLa7IQPCCsn4",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "returnAll": true,
+        "simple": false,
+        "filters": {
+          "q": "(\"Rechnung\" OR \"Transaktion\" OR \"payment\" OR \"Invoice\" OR \"Bestellung\" OR \"RechnungOnline\") ",
+          "receivedAfter": "={{ $json.startOfMonth }}",
+          "receivedBefore": "={{ $json.endOfMonth }}"
+        },
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -300,
+        80
+      ],
+      "id": "7f52b470-25f7-45c4-b265-8d3d8d285cbe",
+      "name": "Gmail",
+      "webhookId": "6c5d8a46-a332-45e2-a756-206c9fed9ca4",
+      "alwaysOutputData": true,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "TEhToEGdNKXg9DJT",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -1760,
+        100
+      ],
+      "id": "a63f83bb-c1b6-446f-8ea3-df46cd9947a0",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -1600,
+        280
+      ],
+      "id": "e16cd9ea-71d2-45dc-8c25-90be97c9930d",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "uCu55YnRJicML3BN",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3254ffd2-a2bb-4fbe-9091-37e681224c46",
+              "leftValue": "={{ $json.headers[\"content-type\"] }}",
+              "rightValue": "Content-Type: multipart/mixed",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        340,
+        100
+      ],
+      "id": "762fdc9c-8d02-4c82-8507-2b902f03c5ae",
+      "name": "contains Attachment"
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "attachment_0",
+        "name": "attachment_0",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1peXOmuzUGA7e808pdve34bwFNzDKtgun",
+          "mode": "list",
+          "cachedResultName": "Invoices/2025/04",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1peXOmuzUGA7e808pdve34bwFNzDKtgun"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        840,
+        -260
+      ],
+      "id": "ad1eac8f-fb94-4ba7-9bcb-90d6fe1258c4",
+      "name": "upload attachment to google drive",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "KfBSYk4QPQbhwKXX",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        100,
+        80
+      ],
+      "id": "74efc71d-5f71-4b5a-9eb1-d685471b1696",
+      "name": "loop over fetched emails"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -700,
+        100
+      ],
+      "id": "65efb29c-739a-4799-9cc7-41f78d523247",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.html2pdf.app/v1/generate",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "apiKey",
+              "value": "FW1H5q2dPfoAHMRqSTbRhekxrFrUEONF1H78Az0J6edxQtuLMU2nTCZX1mDQDbdV"
+            },
+            {
+              "name": "html",
+              "value": "={{ $json.html }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        560,
+        200
+      ],
+      "id": "057a6ac1-2489-4ce9-999a-215330d45300",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the input data - handle different possible structures\nlet inputData;\nif ($input.item.json && $input.item.json.rows) {\n  // If data is in the expected format\n  inputData = $input.item.json.rows;\n} else if (Array.isArray($input.item.json)) {\n  // If data is directly an array\n  inputData = $input.item.json;\n} else {\n  // Fallback - try to parse from output if it exists\n  try {\n    if ($input.item.json.output) {\n      // Try to parse the markdown table\n      const lines = $input.item.json.output.split('\\n');\n      // Skip header and separator (first 2 lines)\n      const dataRows = lines.slice(2);\n      \n      inputData = dataRows.map(row => {\n        const cells = row.trim().split('|').filter(cell => cell !== '');\n        if (cells.length >= 4) {\n          return {\n            date: cells[0].trim(),\n            description: cells[1].trim(),\n            location: cells[2].trim(),\n            amount: cells[3].trim()\n          };\n        }\n        return null;\n      }).filter(row => row !== null);\n    } else {\n      // If no recognizable data format, return empty array\n      inputData = [];\n    }\n  } catch (error) {\n    // Return empty array if parsing fails\n    inputData = [];\n  }\n}\n\n// Skip header rows if they exist\nconst transactionRows = inputData.length >= 2 && \n                        inputData[0].date === \"Date\" ? \n                        inputData.slice(2) : inputData;\n\n// Process each row and return in format for Google Sheets\nreturn transactionRows.map(row => {\n  return {\n    json: {\n      date: row.date,\n      description: row.description,\n      location: row.location,\n      amount: row.amount\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1280,
+        100
+      ],
+      "id": "4e56aef8-fcda-4df8-8a77-31d3504fea3e",
+      "name": "filtering data in table format"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "16AUqwLHfQ1jRmycyM63EPksLf3LjORye",
+          "mode": "list",
+          "cachedResultName": "creditcard-input/2024/40",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/16AUqwLHfQ1jRmycyM63EPksLf3LjORye"
+        },
+        "event": "fileCreated",
+        "options": {
+          "fileType": "all"
+        }
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -2300,
+        100
+      ],
+      "id": "1e6c0c26-53cf-4fad-bf72-9fecc9a2166d",
+      "name": "Google Drive Trigger",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "KfBSYk4QPQbhwKXX",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "data",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1peXOmuzUGA7e808pdve34bwFNzDKtgun",
+          "mode": "list",
+          "cachedResultName": "Invoices/2025/04",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1peXOmuzUGA7e808pdve34bwFNzDKtgun"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        840,
+        200
+      ],
+      "id": "7d591771-b2f3-4874-a1bd-ccb92c2dfbe0",
+      "name": "upload attachment to google drive1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "KfBSYk4QPQbhwKXX",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date();\n\n// Start of the month\nconst startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);\n\n// End of the month\nconst endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0); // \"0\" gives last day of the previous month (so next month + 0 = last day of current month)\n\n// Format dates\nconst formattedStartDate = `${startOfMonth.getFullYear()}-${String(startOfMonth.getMonth() + 1).padStart(2, '0')}-${String(startOfMonth.getDate()).padStart(2, '0')}T00:00:00`;\nconst formattedEndDate = `${endOfMonth.getFullYear()}-${String(endOfMonth.getMonth() + 1).padStart(2, '0')}-${String(endOfMonth.getDate()).padStart(2, '0')}T23:59:59`;\n\nreturn {\n  json: {\n    startOfMonth: formattedStartDate,\n    endOfMonth: formattedEndDate\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -480,
+        80
+      ],
+      "id": "7146c8b2-6929-4fc0-894e-4cb5d0cf0b3b",
+      "name": "date formatting"
+    },
+    {
+      "parameters": {
+        "content": "## Google Drive Trigger \nAutomatically triggered when new file is uploaded in the specified folder.\n",
+        "height": 280,
+        "width": 260,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2380,
+        -40
+      ],
+      "typeVersion": 1,
+      "id": "be63ce06-ae05-4930-b4f1-61b19054eefe",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Fetching file from Google Drive\nFetching file from specific folder and downloading it.",
+        "height": 280,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2080,
+        -40
+      ],
+      "typeVersion": 1,
+      "id": "d33f935c-9bc5-47ac-95b9-ae490fb98104",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Data Extraction and Manipulation\nData is being extracted from the PDF in form of binary that being passed on the AI Agent (using OpenAI Chat Model) which is parsing and converting data to readable format. Custom script in JavaScript converting the binary data into Table format linking",
+        "height": 440,
+        "width": 660,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1800,
+        -40
+      ],
+      "typeVersion": 1,
+      "id": "8b076d31-7350-482f-b3ba-2d0cfa849faa",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Uploading data to Google Sheet\nPushing the formatted Table into Google Sheet\n",
+        "height": 280,
+        "width": 260,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1100,
+        -40
+      ],
+      "typeVersion": 1,
+      "id": "9ded1ab5-4b80-41bc-9783-b7db356e5d40",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## Fetching emails from Gmail\nFetching the first and last date of current month to fetch   specific emails using special keywords to search",
+        "height": 280,
+        "width": 700,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -800,
+        -40
+      ],
+      "typeVersion": 1,
+      "id": "e4b006e1-b788-4d2d-9c4f-1064332e1a1c",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "## Uploading attachments to Google Drive \n1) Looping over every single fetched email\n2) Check if the email contains attachment.\n3) Upload attachment to Google Drive\n4) If there is no attachment, convert the HTML to PDF and then upload the converted attachment on Google Drive",
+        "height": 680,
+        "width": 1160,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -60,
+        -280
+      ],
+      "typeVersion": 1,
+      "id": "5bb67b5d-2e76-4962-8874-f1c8a499e6f4",
+      "name": "Sticky Note5"
+    }
+  ],
+  "pinData": {
+    "Google Drive Trigger": [
+      {
+        "json": {
+          "kind": "drive#file",
+          "fileExtension": "pdf",
+          "copyRequiresWriterPermission": false,
+          "md5Checksum": "db3c04ebfb48891ec1f7c5df22b31b8c",
+          "writersCanShare": true,
+          "viewedByMe": true,
+          "mimeType": "application/pdf",
+          "parents": [
+            "16AUqwLHfQ1jRmycyM63EPksLf3LjORye"
+          ],
+          "thumbnailLink": "https://lh3.googleusercontent.com/drive-storage/AJQWtBPRAooGN8tnXdGKjr_-ceiVhLCtkfJ_yVUT0TM8I8FWYOzdJ1jSf0Q3u5pOX2L2Q5T44U1iJQVjgb9aeZW3glRRrCa6sSMFPuAitoMINR-Nyw=s220",
+          "iconLink": "https://drive-thirdparty.googleusercontent.com/16/type/application/pdf",
+          "shared": false,
+          "lastModifyingUser": {
+            "displayName": "Matthias",
+            "kind": "drive#user",
+            "me": true,
+            "permissionId": "11222319660904033160",
+            "emailAddress": "n8n.4455@gmail.com",
+            "photoLink": "https://lh3.googleusercontent.com/a/ACg8ocJgS8Za2nAUU34meeb3t3KF5DCFTzAnW-HWYTqhZSlOBz9giA=s64"
+          },
+          "owners": [
+            {
+              "displayName": "Matthias",
+              "kind": "drive#user",
+              "me": true,
+              "permissionId": "11222319660904033160",
+              "emailAddress": "n8n.4455@gmail.com",
+              "photoLink": "https://lh3.googleusercontent.com/a/ACg8ocJgS8Za2nAUU34meeb3t3KF5DCFTzAnW-HWYTqhZSlOBz9giA=s64"
+            }
+          ],
+          "headRevisionId": "0B_QhrV8iJ4FHWW1VV09zcWdSTGpWSFVxUHRtUUt2c2RYekJBPQ",
+          "webViewLink": "https://drive.google.com/file/d/1WGo4Rn8ip4B7VyMjx9PLkBiLklhdn2qW/view?usp=drivesdk",
+          "webContentLink": "https://drive.google.com/uc?id=1WGo4Rn8ip4B7VyMjx9PLkBiLklhdn2qW&export=download",
+          "size": "96809",
+          "viewersCanCopyContent": true,
+          "permissions": [
+            {
+              "id": "11222319660904033160",
+              "displayName": "Matthias",
+              "type": "user",
+              "kind": "drive#permission",
+              "photoLink": "https://lh3.googleusercontent.com/a/ACg8ocJgS8Za2nAUU34meeb3t3KF5DCFTzAnW-HWYTqhZSlOBz9giA=s64",
+              "emailAddress": "n8n.4455@gmail.com",
+              "role": "owner",
+              "deleted": false,
+              "pendingOwner": false
+            }
+          ],
+          "hasThumbnail": true,
+          "spaces": [
+            "drive"
+          ],
+          "id": "1WGo4Rn8ip4B7VyMjx9PLkBiLklhdn2qW",
+          "name": "4208_5122_ABRECHNUNG_VOM_03_02_2024_Dr_Kose_Matthias_x (1).pdf",
+          "starred": false,
+          "trashed": false,
+          "explicitlyTrashed": false,
+          "createdTime": "2025-04-28T11:00:54.118Z",
+          "modifiedTime": "2025-04-22T21:20:37.000Z",
+          "modifiedByMeTime": "2025-04-22T21:20:37.000Z",
+          "viewedByMeTime": "2025-04-28T11:00:54.118Z",
+          "quotaBytesUsed": "96809",
+          "version": "3",
+          "originalFilename": "4208_5122_ABRECHNUNG_VOM_03_02_2024_Dr_Kose_Matthias_x (1).pdf",
+          "ownedByMe": true,
+          "fullFileExtension": "pdf",
+          "isAppAuthorized": false,
+          "capabilities": {
+            "canChangeViewersCanCopyContent": true,
+            "canEdit": true,
+            "canCopy": true,
+            "canComment": true,
+            "canAddChildren": false,
+            "canDelete": true,
+            "canDownload": true,
+            "canListChildren": false,
+            "canRemoveChildren": false,
+            "canRename": true,
+            "canTrash": true,
+            "canReadRevisions": true,
+            "canChangeCopyRequiresWriterPermission": true,
+            "canMoveItemIntoTeamDrive": true,
+            "canUntrash": true,
+            "canModifyContent": true,
+            "canMoveItemOutOfDrive": true,
+            "canAddMyDriveParent": false,
+            "canRemoveMyDriveParent": true,
+            "canMoveItemWithinDrive": true,
+            "canShare": true,
+            "canMoveChildrenWithinDrive": false,
+            "canModifyContentRestriction": true,
+            "canChangeSecurityUpdateEnabled": false,
+            "canAcceptOwnership": false,
+            "canReadLabels": false,
+            "canModifyLabels": false,
+            "canModifyEditorContentRestriction": true,
+            "canModifyOwnerContentRestriction": true,
+            "canRemoveContentRestriction": false,
+            "canDisableInheritedPermissions": false,
+            "canEnableInheritedPermissions": true
+          },
+          "thumbnailVersion": "1",
+          "modifiedByMe": true,
+          "permissionIds": [
+            "11222319660904033160"
+          ],
+          "linkShareMetadata": {
+            "securityUpdateEligible": false,
+            "securityUpdateEnabled": true
+          },
+          "sha1Checksum": "616acc13b0093d91a6ae5c986f842e45c0e06597",
+          "sha256Checksum": "7d04f847c19fc9da5bdfc5cf09696a4da71bf4040566a7708bb963ae68cbc372",
+          "inheritedPermissionsDisabled": false
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "filtering data in table format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail": {
+      "main": [
+        [
+          {
+            "node": "loop over fetched emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "contains Attachment": {
+      "main": [
+        [
+          {
+            "node": "upload attachment to google drive",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "upload attachment to google drive": {
+      "main": [
+        [
+          {
+            "node": "loop over fetched emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "loop over fetched emails": {
+      "main": [
+        [],
+        [
+          {
+            "node": "contains Attachment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "date formatting",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "upload attachment to google drive1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "filtering data in table format": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "upload attachment to google drive1": {
+      "main": [
+        [
+          {
+            "node": "loop over fetched emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "date formatting": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "77fd286d-c63e-41a3-a729-443de30b350d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cb2e0fa74a951a2f695eeb3a892c2a43b7bac83b242b7fa76a833441fa5bafbe"
+  },
+  "id": "A7YpQZhlABp39fZU",
+  "tags": []
+}
